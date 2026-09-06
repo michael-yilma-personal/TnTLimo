@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import {
@@ -32,6 +32,7 @@ import {
   vehiclesForPassengerCount,
 } from "@/lib/pricing/engine";
 import { AIRPORT_PRICING } from "@/lib/booking/pricing/data";
+import { isAddressProvided, requiresManualQuote } from "@/lib/booking/addressFallback";
 import ChildSeatSelector from "./ChildSeatSelector";
 import GoogleAddressAutocomplete from "./GoogleAddressAutocomplete";
 import VehicleSelector from "./VehicleSelector";
@@ -478,6 +479,17 @@ export default function TransportationBookingWizard() {
     | { kind: "error"; message: string; offending?: "pickup" | "dropoff" | "both" };
   const [quote, setQuote] = useState<QuoteState>({ kind: "idle" });
 
+  /**
+   * Set when Google Places autocomplete reports itself unusable — the daily
+   * `AutocompletePlaces` quota is exhausted (HTTP 429), the API is down, or
+   * the browser key is missing/misscoped. No Place ID can be produced in that
+   * state, so without this flag every address field fails validation and the
+   * whole booking funnel dead-ends silently. Sticky for the session: once
+   * Google has failed we don't flip back mid-booking.
+   */
+  const [addressLookupDegraded, setAddressLookupDegraded] = useState(false);
+  const markAddressLookupDegraded = useCallback(() => setAddressLookupDegraded(true), []);
+
   /** Step-5 gratuity picker is collapsed by default — the Review page reads
       as confirmation rather than another decision. Default 20% comes from
       `INITIAL_STATE.gratuity`; this state only controls visibility. */
@@ -742,6 +754,25 @@ export default function TransportationBookingWizard() {
       };
     }
 
+    // Address search is down, so the addresses below are unvalidated free
+    // text with no coordinates. The branches further down would happily price
+    // those at the INCLUDED_MILES sentinel — fine as a teaser, but charging it
+    // would bill the customer for a fare nobody actually measured. Force the
+    // manual-quote path instead: `total: null` routes `handleSubmit` to the
+    // email flow, so we confirm the address and send a fare, no card taken.
+    if (requiresManualQuote(state.service, addressLookupDegraded)) {
+      return {
+        basePrice: null as number | null,
+        addOns: 0,
+        gratuity: 0,
+        total: null as number | null,
+        pending: true,
+        routeLabel: "We'll confirm your address and send your fare.",
+        priceLabel: "Total",
+        breakdown: undefined as BreakdownLine[] | undefined,
+      };
+    }
+
     if (state.service === "airport-transfer") {
       // Only trust the API quote if it was computed for the currently
       // selected vehicle. Otherwise (the user just switched vehicles) it's
@@ -983,7 +1014,7 @@ export default function TransportationBookingWizard() {
       priceLabel: "Total",
       breakdown: hourlyBreakdown,
     };
-  }, [state, quote]);
+  }, [state, quote, addressLookupDegraded]);
 
   /** Map from `WizardState` keys to the `fieldErrors` keys we render under each field. */
   const STATE_TO_ERROR_KEY: Partial<Record<keyof WizardState, string[]>> = {
@@ -1039,8 +1070,16 @@ export default function TransportationBookingWizard() {
     if (currentStep === 2) {
       if (state.service === "airport-transfer") {
         if (!state.airport) errs.airport = "Pick an airport.";
-        if (!state.otherAddress || !state.otherAddressPlaceId) {
-          errs["airport-other-address"] = "Pick your hotel or address from the suggestions.";
+        if (
+          !isAddressProvided({
+            address: state.otherAddress,
+            placeId: state.otherAddressPlaceId,
+            lookupDegraded: addressLookupDegraded,
+          })
+        ) {
+          errs["airport-other-address"] = addressLookupDegraded
+            ? "Enter your hotel name or full address."
+            : "Pick your hotel or address from the suggestions.";
         }
         if (!isValidDateTime(state.flightTime)) {
           errs["flight-time"] =
@@ -1053,11 +1092,27 @@ export default function TransportationBookingWizard() {
         }
       }
       if (state.service === "point-to-point") {
-        if (!state.pickupPlaceId) {
-          errs["pickup-address-p2p"] = "Pick a pickup address from the suggestions.";
+        if (
+          !isAddressProvided({
+            address: state.pickupAddress,
+            placeId: state.pickupPlaceId,
+            lookupDegraded: addressLookupDegraded,
+          })
+        ) {
+          errs["pickup-address-p2p"] = addressLookupDegraded
+            ? "Enter the full pickup address."
+            : "Pick a pickup address from the suggestions.";
         }
-        if (!state.dropoffPlaceId) {
-          errs["dropoff-address-p2p"] = "Pick a drop-off address from the suggestions.";
+        if (
+          !isAddressProvided({
+            address: state.dropoffAddress,
+            placeId: state.dropoffPlaceId,
+            lookupDegraded: addressLookupDegraded,
+          })
+        ) {
+          errs["dropoff-address-p2p"] = addressLookupDegraded
+            ? "Enter the full drop-off address."
+            : "Pick a drop-off address from the suggestions.";
         }
         if (!state.pickupDateTime || !isValidDateTime(state.pickupDateTime)) {
           errs["pickup-time-p2p"] = "Enter a valid pickup date and time.";
@@ -1070,8 +1125,16 @@ export default function TransportationBookingWizard() {
         }
       }
       if (state.service === "hourly-charter") {
-        if (!state.pickupAddress || !state.pickupPlaceId) {
-          errs["pickup-address-charter"] = "Pick a pickup address from the suggestions.";
+        if (
+          !isAddressProvided({
+            address: state.pickupAddress,
+            placeId: state.pickupPlaceId,
+            lookupDegraded: addressLookupDegraded,
+          })
+        ) {
+          errs["pickup-address-charter"] = addressLookupDegraded
+            ? "Enter the full pickup address."
+            : "Pick a pickup address from the suggestions.";
         }
         if (!state.pickupDateTime || !isValidDateTime(state.pickupDateTime)) {
           errs["pickup-time-charter"] = "Enter a valid pickup date and time.";
@@ -1499,8 +1562,18 @@ export default function TransportationBookingWizard() {
         </p>
       )}
 
+      {requiresManualQuote(state.service, addressLookupDegraded) && (
+        <p className="mt-3 rounded-xl border border-sunset/20 bg-sunset/10 px-3 py-2 text-xs text-ink leading-relaxed">
+          Address search is temporarily unavailable, so we can&apos;t measure
+          this route automatically. Finish the form and we&apos;ll confirm your
+          addresses and send your fare — no card charged now.
+        </p>
+      )}
+
       <p className="mt-4 text-xs text-muted leading-relaxed">
-        Payment is securely processed by Stripe at booking. Full refund if you cancel at least 24 hours before pickup.
+        {requiresManualQuote(state.service, addressLookupDegraded)
+          ? `Prefer to book right now? Call us at ${SITE_CONTACT.phoneDisplay} and we'll take it over the phone.`
+          : "Payment is securely processed by Stripe at booking. Full refund if you cancel at least 24 hours before pickup."}
       </p>
     </div>
   );
@@ -1881,6 +1954,8 @@ export default function TransportationBookingWizard() {
                 label={addressLabel}
                 value={state.otherAddress}
                 placeId={state.otherAddressPlaceId}
+                onUnavailable={markAddressLookupDegraded}
+                forceFallback={addressLookupDegraded}
                 placeholder={addressPlaceholder}
                 required
                 onChange={(picked) => {
@@ -2042,6 +2117,8 @@ export default function TransportationBookingWizard() {
                   label="Pickup address"
                   value={state.pickupAddress}
                   placeId={state.pickupPlaceId}
+                  onUnavailable={markAddressLookupDegraded}
+                  forceFallback={addressLookupDegraded}
                   required
                   placeholder={`Start typing — we'll only show locations within ${SERVICE_RADIUS_MILES} miles of our home base.`}
                   inputRef={(el) => { firstFieldRef.current = el; }}
@@ -2067,6 +2144,8 @@ export default function TransportationBookingWizard() {
                   label="Drop-off address"
                   value={state.dropoffAddress}
                   placeId={state.dropoffPlaceId}
+                  onUnavailable={markAddressLookupDegraded}
+                  forceFallback={addressLookupDegraded}
                   required
                   placeholder={`Destination — must also be within ${SERVICE_RADIUS_MILES} miles of our home base.`}
                   onChange={(picked) => {
@@ -2160,6 +2239,8 @@ export default function TransportationBookingWizard() {
                 label="Pickup address"
                 value={state.pickupAddress}
                 placeId={state.pickupPlaceId}
+                onUnavailable={markAddressLookupDegraded}
+                forceFallback={addressLookupDegraded}
                 placeholder="Hotel, event venue, or address"
                 required
                 inputRef={(el) => { firstFieldRef.current = el; }}
@@ -2553,7 +2634,9 @@ export default function TransportationBookingWizard() {
         subtitle={
           priceSummary.total !== null
             ? "Review your booking, then continue to secure checkout. Card is charged in full at booking; full refund if you cancel up to 24 hours before pickup."
-            : "Group sizes 15+ are quoted manually — we'll receive your details and reply with a quote, no card required at this step."
+            : addressLookupDegraded
+              ? "Address search is temporarily unavailable, so we're quoting this one by hand — we'll receive your details and reply with your fare, no card required at this step."
+              : "Group sizes 15+ are quoted manually — we'll receive your details and reply with a quote, no card required at this step."
         }
       />
 

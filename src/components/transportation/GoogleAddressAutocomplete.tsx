@@ -41,6 +41,22 @@ interface Props {
   placeholder?: string;
   required?: boolean;
   inputRef?: (el: HTMLElement | null) => void;
+  /**
+   * Called once when Places autocomplete turns out to be unusable — the API
+   * key/library failed to load, or Google reported a request error (most
+   * commonly HTTP 429 once the project's daily `AutocompletePlaces` quota is
+   * exhausted). The parent uses this to relax its "pick from the suggestions"
+   * validation so a Places outage can't take the whole booking funnel down.
+   */
+  onUnavailable?: (reason: string) => void;
+  /**
+   * Forces the typed-address fallback even though this particular field
+   * hasn't errored yet. The parent sets it once any address field reports an
+   * outage, so a form with two address inputs switches both together instead
+   * of leaving the second one as a dead search box until the customer types
+   * into it and it fails too.
+   */
+  forceFallback?: boolean;
 }
 
 // Singleton loader — concurrent mounts share the same places-library import.
@@ -75,12 +91,26 @@ export default function GoogleAddressAutocomplete({
   placeholder,
   required,
   inputRef,
+  onUnavailable,
+  forceFallback,
 }: Props) {
   const reactId = useId();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const elementRef = useRef<HTMLElement | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  /** Set once Google reports a request error — switches to the typed-address input. */
+  const [requestError, setRequestError] = useState<string | null>(null);
+
+  // The mount effect runs once, so read the latest callback through a ref
+  // instead of capturing the first render's closure.
+  const onUnavailableRef = useRef(onUnavailable);
+  onUnavailableRef.current = onUnavailable;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const fallbackInputRef = useRef<HTMLInputElement | null>(null);
+  /** True when the Google element held focus at the moment it failed. */
+  const stealFocusRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,6 +263,34 @@ export default function GoogleAddressAutocomplete({
         const events = ["gmp-select", "gmp-placeselect"];
         for (const name of events) element.addEventListener(name, handler as EventListener);
 
+        // Google fires `gmp-error` for every failed backend request. In
+        // production the likeliest cause by far is the Cloud project's daily
+        // `AutocompletePlaces` quota running out — after that the field
+        // returns no suggestions for the rest of the day and, without this
+        // handler, says nothing at all while the customer types into a dead
+        // search box. Degrade to a typed-address input on the first error.
+        const errorHandler = (ev: Event) => {
+          if (cancelled) return;
+          const detail = (ev as CustomEvent).detail;
+          const message = describeGoogleError(detail);
+          console.error(`[GoogleAddressAutocomplete:${id}] gmp-error:`, message, detail);
+          setRequestError((prev) => prev ?? message);
+          // Carry whatever the customer already typed into the fallback input
+          // so switching over doesn't wipe their work. The host element
+          // mirrors the embedded input through its `value` property (the
+          // shadow root is closed, so this is the only way to read it).
+          const typed = (element as unknown as { value?: unknown }).value;
+          if (typeof typed === "string" && typed.trim() && !valueRef.current) {
+            onChange({ placeId: "", formattedAddress: typed, name: undefined, location: undefined });
+          }
+          // The customer is mid-word and we're about to hide the element out
+          // from under them, so hand the caret to the replacement input.
+          // Only when THIS field had focus — a sibling field degrading in the
+          // background must not yank focus across the form.
+          stealFocusRef.current = document.activeElement === element;
+        };
+        element.addEventListener("gmp-error", errorHandler);
+
         // The Google web component doesn't fire any event when the user
         // clears the input manually (or via its built-in × button), which
         // would otherwise leave React state holding a stale Place ID. Listen
@@ -248,6 +306,7 @@ export default function GoogleAddressAutocomplete({
 
         cleanup = () => {
           for (const name of events) element.removeEventListener(name, handler as EventListener);
+          element.removeEventListener("gmp-error", errorHandler);
           detachClear();
         };
 
@@ -278,6 +337,28 @@ export default function GoogleAddressAutocomplete({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Every failure mode means the customer can never produce a Place ID, so
+  // they all fall back to the same plain typed-address input.
+  const ownFailure = loadError ?? requestError;
+  const unavailableReason =
+    ownFailure ?? (forceFallback ? "Address search is unavailable" : null);
+
+  // Only report our OWN failure upward — echoing a parent-driven
+  // `forceFallback` back to the parent would be a pointless round trip.
+  useEffect(() => {
+    if (ownFailure) onUnavailableRef.current?.(ownFailure);
+  }, [ownFailure]);
+
+  useEffect(() => {
+    if (!unavailableReason || !stealFocusRef.current) return;
+    stealFocusRef.current = false;
+    const input = fallbackInputRef.current;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    // Caret to the end so the customer just keeps typing where they left off.
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, [unavailableReason]);
+
   return (
     <div>
       <label
@@ -290,7 +371,7 @@ export default function GoogleAddressAutocomplete({
 
       {/* Loading placeholder — separate sibling so React never owns children
           inside the Google-managed container. */}
-      {!ready && !loadError && (
+      {!ready && !unavailableReason && (
         <input
           id={id || reactId}
           type="text"
@@ -316,27 +397,77 @@ export default function GoogleAddressAutocomplete({
         data-google-autocomplete={id}
         className="relative flex items-center w-full min-h-[3rem] rounded-xl border border-[#C9BFAE] bg-white px-3 transition-colors outline-none hover:border-[#A88850] focus-within:border-[#A88850]"
         // Hidden until ready so it doesn't reserve layout space before the
-        // web component upgrades.
-        style={{ display: ready ? "flex" : "none" }}
+        // web component upgrades, and hidden again if Google turns out to be
+        // unusable — the typed-address input below takes over.
+        style={{ display: ready && !unavailableReason ? "flex" : "none" }}
       />
 
-      {loadError && (
-        <p className="mt-2 text-xs text-red-700" role="alert">
-          Couldn&apos;t load Google address search: {loadError}
-        </p>
+      {/* Fallback: address search is down, so take the address as free text.
+          The booking still goes through — it routes to the manual-quote path
+          instead of instant checkout, because we can't measure the distance
+          without coordinates. */}
+      {unavailableReason && (
+        <>
+          <input
+            id={id || reactId}
+            type="text"
+            value={value}
+            onChange={(e) =>
+              onChange({
+                placeId: "",
+                formattedAddress: e.target.value,
+                name: undefined,
+                location: undefined,
+              })
+            }
+            placeholder="Type the full address, e.g. 1313 Disneyland Dr, Anaheim"
+            autoComplete="street-address"
+            required={required}
+            // Take over the parent's focus target — the Google element it was
+            // pointed at on mount is hidden now and can't receive focus.
+            ref={(el) => {
+              fallbackInputRef.current = el;
+              inputRef?.(el);
+            }}
+            className="w-full rounded-xl border border-[#C9BFAE] bg-white px-4 py-3 font-sans text-sm text-ink placeholder:text-muted/70 outline-none transition-colors hover:border-[#A88850] focus:border-[#A88850]"
+          />
+          {/* Kept to one line — the booking summary panel carries the full
+              "here's what happens next" explanation, and repeating it under
+              every address field buries the form. */}
+          <p className="mt-1.5 text-xs text-muted" role="status">
+            Address search is temporarily unavailable — please type the full address.
+          </p>
+        </>
       )}
 
-      {placeId && value && !loadError && (
+      {placeId && value && !unavailableReason && (
         <p className="mt-1.5 text-xs text-muted truncate" aria-live="polite">
           Selected: <span className="text-ink/80">{value}</span>
         </p>
       )}
 
-      {placeholder && !value && ready && (
+      {placeholder && !value && ready && !unavailableReason && (
         <p className="mt-1.5 text-xs text-muted/80">{placeholder}</p>
       )}
     </div>
   );
+}
+
+/**
+ * Pull a human-readable message out of a `gmp-error` event detail. Google
+ * hasn't settled on one shape across SDK revisions, so probe defensively and
+ * fall back to a generic string rather than rendering "[object Object]".
+ */
+function describeGoogleError(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (detail instanceof Error) return detail.message;
+  if (detail && typeof detail === "object") {
+    const d = detail as { error?: unknown; message?: unknown };
+    if (d.error instanceof Error) return d.error.message;
+    if (typeof d.message === "string") return d.message;
+    if (typeof d.error === "string") return d.error;
+  }
+  return "Google address search request failed";
 }
 
 /**
