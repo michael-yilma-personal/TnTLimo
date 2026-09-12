@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
+import BookingConversion from "./BookingConversion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { db } from "@/lib/booking/db";
@@ -54,6 +55,15 @@ export default async function BookingSuccessPage({ searchParams }: PageProps) {
                 : "We're confirming your booking. You'll get an email with your confirmation number and details in a moment."}
             </p>
           </div>
+
+          {booking && (
+            <BookingConversion
+              transactionId={booking.confirmationCode}
+              valueUsd={booking.totalCents / 100}
+              email={booking.customerEmail}
+              phone={booking.customerPhone}
+            />
+          )}
 
           {booking && (
             <div className="rounded-3xl border border-border bg-white p-6 sm:p-8 shadow-[0_4px_16px_-6px_rgba(12,11,10,0.10)]">

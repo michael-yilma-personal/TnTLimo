@@ -6,6 +6,7 @@ import { publicUrl } from "@/lib/publicPath";
 import { IS_BETA, SITE_URL } from "@/lib/siteEnv";
 import { cn } from "@/lib/utils";
 import BetaBanner from "@/components/BetaBanner";
+import ConversionListeners from "@/components/analytics/ConversionListeners";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -78,6 +79,9 @@ export default function RootLayout({
             </Script>
           </>
         )}
+        {/* Delegated tracking for tel: and Peek links. Safe on beta: the
+            helpers no-op when the Google tag isn't on the page. */}
+        <ConversionListeners />
         {children}
         {IS_BETA && <BetaBanner />}
       </body>

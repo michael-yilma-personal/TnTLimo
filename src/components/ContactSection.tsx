@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeUp, viewport } from "@/lib/motionVariants";
+import { trackContactFormSubmit } from "@/lib/analytics/conversions";
 import { SITE_CONTACT } from "@/lib/siteContact";
 
 export default function ContactSection() {
@@ -31,6 +32,8 @@ export default function ContactSection() {
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean };
       if (res.ok && data.ok) {
         setStatus("success");
+        // Counted on delivery, not on click — a failed send isn't a lead.
+        trackContactFormSubmit();
         form.reset();
       } else {
         setStatus("error");

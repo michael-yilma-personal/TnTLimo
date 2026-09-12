@@ -21,6 +21,7 @@ import {
 } from "@/lib/transportationData";
 import { minHoursFor } from "@/lib/booking/pricing/hourlyCharter";
 import { AIRPORTS } from "@/lib/transportationLocations";
+import { trackCustomQuoteRequest } from "@/lib/analytics/conversions";
 import { SITE_CONTACT } from "@/lib/siteContact";
 import { FORM_SUBJECT_PREFIX } from "@/lib/siteEnv";
 import {
@@ -1405,6 +1406,7 @@ export default function TransportationBookingWizard() {
         if (!data.success && data.success !== "true") throw new Error("submission failed");
       }
       setSubmitStatus("success");
+      trackCustomQuoteRequest();
       // Clean up the in-progress draft now that the booking is in the system —
       // a stale draft from a completed booking would confuse the customer on
       // a later visit.
