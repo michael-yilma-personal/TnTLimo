@@ -7,7 +7,7 @@ import { IS_BETA, SITE_URL } from "@/lib/siteEnv";
 import { cn } from "@/lib/utils";
 import BetaBanner from "@/components/BetaBanner";
 import ConversionListeners from "@/components/analytics/ConversionListeners";
-import { GOOGLE_ADS_ID } from "@/lib/analytics/conversions";
+import { GA4_MEASUREMENT_ID, GOOGLE_ADS_ID } from "@/lib/analytics/conversions";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -60,20 +60,22 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", cormorant.variable, montserrat.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col bg-cream text-ink">
-        {/* Google Ads conversion pixel — production only.
-            On beta, test traffic would inflate impressions and pollute conversions. */}
+        {/* Google tag — production only. One gtag.js load, two destinations:
+            Google Ads (conversions) and GA4 (traffic + behaviour).
+            On beta, test traffic would inflate impressions and pollute both. */}
         {!IS_BETA && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
               strategy="afterInteractive"
             />
-            <Script id="google-ads-gtag" strategy="afterInteractive">
+            <Script id="google-gtag" strategy="afterInteractive">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', '${GOOGLE_ADS_ID}');
+                gtag('config', '${GA4_MEASUREMENT_ID}');
               `}
             </Script>
           </>

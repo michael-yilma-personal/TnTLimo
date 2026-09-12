@@ -1,9 +1,10 @@
 /**
  * Google Ads conversion tracking.
  *
- * The Google tag (AW-1015360162) is loaded in `src/app/layout.tsx`, production
- * only — on beta there is no `gtag` on the page, so every call in here is a
- * silent no-op and beta traffic never pollutes the account.
+ * The Google tag (AW-1015360162 for Ads, G-N47WY0K4S9 for GA4) is loaded in
+ * `src/app/layout.tsx`, production only — on beta there is no `gtag` on the
+ * page, so every call in here is a silent no-op and beta traffic never
+ * pollutes the account.
  *
  * Every conversion action below is a "manual event" action in Google Ads
  * (Goals > Conversions). Nothing fires unless we call it explicitly, which is
@@ -18,6 +19,15 @@
 
 /** Google Ads account tag id. Also consumed by the loader in `src/app/layout.tsx`. */
 export const GOOGLE_ADS_ID = "AW-1015360162";
+
+/**
+ * GA4 measurement id for the "TNT Tours & Transportation" property.
+ * Loaded by the same gtag.js tag as the Ads id in `src/app/layout.tsx`: one
+ * script, two `config` destinations. GA4 sees pageviews and enhanced
+ * measurement; conversions are still reported to Ads from this file, so there
+ * is no GA4-imported duplicate of the purchase event.
+ */
+export const GA4_MEASUREMENT_ID = "G-N47WY0K4S9";
 
 export const CONVERSION_LABELS = {
   /** Paid transportation booking — fires on /booking/success with real revenue. */
