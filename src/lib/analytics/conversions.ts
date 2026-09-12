@@ -16,7 +16,8 @@
  * recreated in Google Ads, the label changes and must be updated here.
  */
 
-const GOOGLE_ADS_ID = "AW-1015360162";
+/** Google Ads account tag id. Also consumed by the loader in `src/app/layout.tsx`. */
+export const GOOGLE_ADS_ID = "AW-1015360162";
 
 export const CONVERSION_LABELS = {
   /** Paid transportation booking — fires on /booking/success with real revenue. */

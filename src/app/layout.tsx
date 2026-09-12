@@ -7,10 +7,9 @@ import { IS_BETA, SITE_URL } from "@/lib/siteEnv";
 import { cn } from "@/lib/utils";
 import BetaBanner from "@/components/BetaBanner";
 import ConversionListeners from "@/components/analytics/ConversionListeners";
+import { GOOGLE_ADS_ID } from "@/lib/analytics/conversions";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-
-const GOOGLE_ADS_ID = "AW-1015360162";
 
 const cormorant = Cormorant({
   subsets: ["latin"],

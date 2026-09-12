@@ -4,7 +4,7 @@ import BookingConversion from "./BookingConversion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { db } from "@/lib/booking/db";
-import { bookings } from "@/lib/booking/schema";
+import { bookings, type BookingStatus } from "@/lib/booking/schema";
 import { signManageToken } from "@/lib/booking/manageToken";
 import { getTenant } from "@/lib/tenant";
 
@@ -22,6 +22,17 @@ export const dynamic = "force-dynamic";
 interface PageProps {
   searchParams: Promise<{ session_id?: string }>;
 }
+
+/**
+ * Statuses whose revenue we're willing to report to Google Ads.
+ *
+ * The row is inserted as `pending` *before* the Stripe redirect, so the mere
+ * existence of a booking for this session id proves nothing — and a customer
+ * who later cancels (refund issued) can reopen this URL from history in a
+ * fresh browser session, where the client-side dedupe key is gone. Only
+ * `pending` (paid, webhook not landed yet) and `confirmed` count.
+ */
+const REPORTABLE_STATUSES = new Set<BookingStatus>(["pending", "confirmed"]);
 
 export default async function BookingSuccessPage({ searchParams }: PageProps) {
   const { session_id } = await searchParams;
@@ -56,7 +67,7 @@ export default async function BookingSuccessPage({ searchParams }: PageProps) {
             </p>
           </div>
 
-          {booking && (
+          {booking && REPORTABLE_STATUSES.has(booking.status) && (
             <BookingConversion
               transactionId={booking.confirmationCode}
               valueUsd={booking.totalCents / 100}
