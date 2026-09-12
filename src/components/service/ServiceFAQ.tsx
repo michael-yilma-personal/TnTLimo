@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { stagger, fadeUp, viewport } from "@/lib/motionVariants";
 import Link from "next/link";
+import JsonLd from "@/components/seo/JsonLd";
+import { faqPageJsonLd } from "@/lib/seo/jsonLd";
 
 export type FAQItem = { question: string; answer: string };
 
@@ -50,6 +52,8 @@ export default function ServiceFAQ({ items, heading = "Frequently Asked Question
 
   return (
     <section className="py-20 bg-sand" aria-label="Frequently asked questions">
+      {/* Answers are collapsed behind a click; this is how a crawler reads them. */}
+      <JsonLd data={faqPageJsonLd(items)} />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-12">
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} className="lg:sticky lg:top-28 self-start">

@@ -7,7 +7,9 @@ import { IS_BETA, SITE_URL } from "@/lib/siteEnv";
 import { cn } from "@/lib/utils";
 import BetaBanner from "@/components/BetaBanner";
 import ConversionListeners from "@/components/analytics/ConversionListeners";
-import { GOOGLE_ADS_ID } from "@/lib/analytics/conversions";
+import { GA4_MEASUREMENT_ID, GOOGLE_ADS_ID } from "@/lib/analytics/conversions";
+import JsonLd from "@/components/seo/JsonLd";
+import { localBusinessJsonLd } from "@/lib/seo/jsonLd";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -28,6 +30,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
   title: "TNT Tours | Anaheim's Premier Tours & Transportation Service",
   description:
     "Anaheim airport transportation, Disneyland transportation, LA tours, private tours, and group transportation across Southern California. LAX, SNA, Long Beach, Burbank, Ontario, and San Diego airport transfers. 5-star rated on Google & TripAdvisor.",
@@ -46,6 +49,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     images: [{ url: publicUrl("/tnt-tours-logo.png"), width: 1254, height: 1254, alt: "TNT Tours & Transportation" }],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "TNT Tours | Anaheim's Premier Tours & Transportation Service",
+    description:
+      "Airport transfers, Disneyland transportation, LA tours, private tours, and group transportation across Southern California \u2014 from one trusted local team in Anaheim.",
+    images: [publicUrl("/tnt-tours-logo.png")],
+  },
 };
 
 export default function RootLayout({
@@ -60,20 +70,25 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", cormorant.variable, montserrat.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col bg-cream text-ink">
-        {/* Google Ads conversion pixel — production only.
-            On beta, test traffic would inflate impressions and pollute conversions. */}
+        {/* Who we are, where we operate, how to reach us — stated once for the
+            whole site so search engines don't have to infer it from prose. */}
+        <JsonLd data={localBusinessJsonLd()} />
+        {/* Google tag — production only. One gtag.js load, two destinations:
+            Google Ads (conversions) and GA4 (traffic + behaviour).
+            On beta, test traffic would inflate impressions and pollute both. */}
         {!IS_BETA && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
               strategy="afterInteractive"
             />
-            <Script id="google-ads-gtag" strategy="afterInteractive">
+            <Script id="google-gtag" strategy="afterInteractive">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', '${GOOGLE_ADS_ID}');
+                gtag('config', '${GA4_MEASUREMENT_ID}');
               `}
             </Script>
           </>
