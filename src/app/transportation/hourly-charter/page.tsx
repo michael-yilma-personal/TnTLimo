@@ -3,8 +3,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TransportationServiceDetail from "@/components/transportation/TransportationServiceDetail";
 import { SITE_IMAGES } from "@/lib/siteImages";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/transportation/hourly-charter" },
   title: "Hourly Charter Transportation in Anaheim | TNT Tours",
   description:
     "Reserve a private vehicle and driver by the hour for events, shopping, sightseeing, business travel, or multiple stops across Anaheim and Southern California.",
@@ -15,6 +18,14 @@ export const metadata: Metadata = {
 export default function HourlyCharterPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Hourly Charter Transportation in Anaheim",
+          description: "A private vehicle and driver reserved by the hour for events, shopping, sightseeing, business travel or multi-stop days.",
+          path: "/transportation/hourly-charter",
+          serviceType: "Charter service",
+        })}
+      />
       <Header />
       <TransportationServiceDetail
         title="Hourly Charter"

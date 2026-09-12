@@ -3,8 +3,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TransportationServiceDetail from "@/components/transportation/TransportationServiceDetail";
 import { SITE_IMAGES } from "@/lib/siteImages";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/transportation/disneyland-transportation" },
   title: "Disneyland Transportation from Anaheim Hotels | TNT Tours",
   description:
     "Comfortable private transportation between Anaheim hotels, Disneyland, Universal Studios, and Southern California airports. Family-friendly vehicles, child seats on request, and door-to-door service.",
@@ -15,6 +18,14 @@ export const metadata: Metadata = {
 export default function DisneylandTransportationPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Disneyland Transportation from Anaheim Hotels",
+          description: "Private door-to-door transportation between Anaheim hotels and the Disneyland Resort, with child seats on request.",
+          path: "/transportation/disneyland-transportation",
+          serviceType: "Attraction transfer",
+        })}
+      />
       <Header />
       <TransportationServiceDetail
         title="Disneyland & Hotel Transportation"

@@ -11,8 +11,11 @@ import PrivateTourContent from "./PrivateTourContent";
 import { SITE_IMAGES } from "@/lib/siteImages";
 import { SITE_CONTACT } from "@/lib/siteContact";
 import { SITE_PRICING } from "@/lib/sitePricing";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/private-los-angeles-tour" },
   title: "Private Los Angeles Tour | Custom Private Hollywood Tour | TNT Tours & Transportation",
   description: "Book a fully private, customizable Los Angeles tour with hotel pickup from Anaheim. Your group, your vehicle, your itinerary. Hollywood, Beverly Hills, Griffith Observatory & more — on your schedule.",
   keywords: "private Los Angeles tour, private Hollywood tour, private LA tour from Anaheim, custom Los Angeles tour, private sightseeing tour LA, private Beverly Hills tour, customizable LA tour, private tour guide Los Angeles",
@@ -21,6 +24,15 @@ export const metadata: Metadata = {
 export default function PrivateLATourPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Private Los Angeles Tour",
+          description: "Fully private, customisable Los Angeles tour with hotel pickup from Anaheim. Your group, your vehicle, your itinerary.",
+          path: "/private-los-angeles-tour",
+          serviceType: "Private sightseeing tour",
+          offer: { price: SITE_PRICING.privateTour6to7Hr[0].price, description: "6\u20137 hour private tour, total per group for 1\u20134 guests." },
+        })}
+      />
       <Header />
       <main>
         <ServiceHero

@@ -3,8 +3,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TransportationServiceDetail from "@/components/transportation/TransportationServiceDetail";
 import { SITE_IMAGES } from "@/lib/siteImages";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/transportation/airport-transfer" },
   title: "Anaheim Airport Transportation | LAX, SNA, LGB, BUR, ONT, SAN | TNT Tours",
   description:
     "Reliable private airport transportation to and from Anaheim, Disneyland-area hotels, and major Southern California airports including LAX, SNA, Long Beach, Burbank, Ontario, and San Diego.",
@@ -15,6 +18,14 @@ export const metadata: Metadata = {
 export default function AirportTransferPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Anaheim Airport Transportation",
+          description: "Private airport transfers between Anaheim and Disneyland-area hotels and LAX, SNA, Long Beach, Burbank, Ontario and San Diego airports.",
+          path: "/transportation/airport-transfer",
+          serviceType: "Airport shuttle service",
+        })}
+      />
       <Header />
       <TransportationServiceDetail
         title="Airport Pickup & Drop-off"

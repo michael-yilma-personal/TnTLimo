@@ -3,8 +3,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TransportationServiceDetail from "@/components/transportation/TransportationServiceDetail";
 import { SITE_IMAGES } from "@/lib/siteImages";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/transportation/point-to-point" },
   title: "Point-to-Point Transportation in Anaheim & LA | TNT Tours",
   description:
     "Private transportation between hotels, attractions, airports, restaurants, event venues, and other destinations across Anaheim and Los Angeles.",
@@ -15,6 +18,14 @@ export const metadata: Metadata = {
 export default function PointToPointPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Point-to-Point Transportation in Anaheim & Los Angeles",
+          description: "Private transportation between hotels, attractions, airports, restaurants and event venues across Anaheim and Los Angeles.",
+          path: "/transportation/point-to-point",
+          serviceType: "Transportation service",
+        })}
+      />
       <Header />
       <TransportationServiceDetail
         title="Point-to-Point Transportation"

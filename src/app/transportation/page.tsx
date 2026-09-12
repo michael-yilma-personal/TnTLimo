@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -7,10 +8,28 @@ import { SectionHeading } from "@/components/transportation/TransportationSectio
 import { SITE_IMAGES } from "@/lib/siteImages";
 import { TRANSPORTATION_SERVICES, TRANSPORTATION_OVERVIEW_CARDS } from "@/lib/transportationData";
 import FamilyCarSeats from "@/components/FamilyCarSeats";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
+
+export const metadata: Metadata = {
+  title: "Anaheim Transportation Services | Airport, Disneyland & Charter | TNT Tours",
+  description:
+    "Private transportation from Anaheim: airport transfers to LAX, SNA, Long Beach, Burbank, Ontario and San Diego, Disneyland and Universal Studios transfers, hourly charter and point-to-point rides.",
+  alternates: { canonical: "/transportation" },
+};
 
 export default function TransportationPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Anaheim Transportation Services",
+          description:
+            "Private transportation from Anaheim: airport transfers, Disneyland and Universal Studios transfers, hourly charter and point-to-point rides.",
+          path: "/transportation",
+          serviceType: "Transportation service",
+        })}
+      />
       <Header />
       <main className="bg-cream text-ink">
         <section className="relative overflow-hidden pt-36 pb-20 sm:pt-44">

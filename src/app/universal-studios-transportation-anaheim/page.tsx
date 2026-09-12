@@ -10,8 +10,11 @@ import RelatedServices from "@/components/service/RelatedServices";
 import UniversalContent from "./UniversalContent";
 import { SITE_IMAGES } from "@/lib/siteImages";
 import { GROUP_OVER_12_CALL_TEXT, SITE_PRICING } from "@/lib/sitePricing";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/universal-studios-transportation-anaheim" },
   title: "Universal Studios Transportation from Anaheim | Roundtrip Shuttle | TNT Tours",
   description: "Skip the parking and stress. Comfortable roundtrip transportation from Anaheim to Universal Studios Hollywood. Hotel pickup available, family-friendly, reliable and on-time service.",
   keywords: "Universal Studios transportation from Anaheim, Anaheim to Universal Studios, roundtrip transportation Universal Studios Hollywood, Universal Studios shuttle Anaheim, private transportation Universal Studios",
@@ -20,6 +23,15 @@ export const metadata: Metadata = {
 export default function UniversalTransportPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Universal Studios Transportation from Anaheim",
+          description: "Roundtrip private transportation between Anaheim hotels and Universal Studios Hollywood, with hotel pickup and a coordinated return.",
+          path: "/universal-studios-transportation-anaheim",
+          serviceType: "Airport and attraction transfer",
+          offer: { price: SITE_PRICING.universalRoundTripTransport[0].price, description: "Roundtrip, total per group for 1\u20134 guests." },
+        })}
+      />
       <Header />
       <main>
         <ServiceHero

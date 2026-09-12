@@ -10,8 +10,11 @@ import RelatedServices from "@/components/service/RelatedServices";
 import LAHollywoodContent from "./LAHollywoodContent";
 import { SITE_IMAGES } from "@/lib/siteImages";
 import { SITE_PRICING } from "@/lib/sitePricing";
+import JsonLd from "@/components/seo/JsonLd";
+import { serviceJsonLd } from "@/lib/seo/jsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/los-angeles-hollywood-tour-from-anaheim" },
   title: "Los Angeles & Hollywood Tour from Anaheim | TNT Tours & Transportation",
   description: "Experience the best of Los Angeles on a guided full-day tour from Anaheim with hotel pickup. Hollywood Walk of Fame, Beverly Hills, Griffith Observatory, Santa Monica & more. 5-star rated, small group.",
   keywords: "Los Angeles tour from Anaheim, Hollywood tour from Anaheim, LA sightseeing tour Anaheim, Anaheim to Hollywood tour, Los Angeles day tour, Beverly Hills tour Anaheim, guided LA tour",
@@ -20,6 +23,15 @@ export const metadata: Metadata = {
 export default function LAHollywoodTourPage() {
   return (
     <>
+      <JsonLd
+        data={serviceJsonLd({
+          name: "Los Angeles & Hollywood Tour from Anaheim",
+          description: "Guided full-day tour of Los Angeles from Anaheim with hotel pickup: Hollywood Walk of Fame, Beverly Hills, Griffith Observatory and Santa Monica.",
+          path: "/los-angeles-hollywood-tour-from-anaheim",
+          serviceType: "Sightseeing tour",
+          offer: { price: SITE_PRICING.fullDayTour.adult, description: "Per adult; children $" + SITE_PRICING.fullDayTour.child + "." },
+        })}
+      />
       <Header />
       <main>
         <ServiceHero

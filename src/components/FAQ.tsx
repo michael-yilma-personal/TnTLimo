@@ -4,6 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { stagger, fadeUp, viewport } from "@/lib/motionVariants";
 import { SITE_CONTACT } from "@/lib/siteContact";
+import JsonLd from "@/components/seo/JsonLd";
+import { faqPageJsonLd } from "@/lib/seo/jsonLd";
 
 const faqs = [
   {
@@ -101,6 +103,8 @@ export default function FAQ() {
 
   return (
     <section id="faq" className="py-24 bg-sand" aria-label="Frequently asked questions">
+      {/* Answers are collapsed behind a click; this is how a crawler reads them. */}
+      <JsonLd data={faqPageJsonLd(faqs)} />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-16">
           {/* Left: Header */}
