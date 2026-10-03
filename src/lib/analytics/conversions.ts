@@ -147,3 +147,48 @@ export function trackPhoneNumberClick(): void {
 export function trackPeekTourBookingClick(): void {
   trackConversion(CONVERSION_LABELS.peekTourBookingClick);
 }
+
+/**
+ * Step-by-step progress through the 5-step transportation booking wizard.
+ *
+ * This is a GA4 event, NOT a Google Ads conversion: it is diagnostic, and
+ * routing it to Ads would let Smart Bidding chase people who merely start a
+ * form. It answers the question the conversion data cannot — of the visitors
+ * who reach the wizard and never finish, which step loses them.
+ *
+ * `reached` fires once per step per session so a customer stepping back and
+ * forth is counted as one visit to that step, which is what a funnel needs.
+ */
+export function trackBookingStep(step: number, label: string): void {
+  const g = gtag();
+  if (!g) return;
+  if (!firedOnce(`ga4:booking_step:${step}`)) return;
+  try {
+    g("event", "booking_step", {
+      send_to: GA4_MEASUREMENT_ID,
+      step_number: step,
+      step_name: label,
+    });
+  } catch {
+    // Swallow — analytics is never load-bearing.
+  }
+}
+
+/**
+ * The customer left the wizard for Stripe Checkout. Paired with
+ * `trackBookingPurchase` on the success page, the gap between the two is the
+ * payment-abandonment rate — the step we currently cannot see at all.
+ */
+export function trackCheckoutRedirect(valueUsd: number | null): void {
+  const g = gtag();
+  if (!g) return;
+  try {
+    g("event", "begin_checkout", {
+      send_to: GA4_MEASUREMENT_ID,
+      currency: "USD",
+      ...(valueUsd === null ? {} : { value: valueUsd }),
+    });
+  } catch {
+    // Swallow — analytics is never load-bearing.
+  }
+}
