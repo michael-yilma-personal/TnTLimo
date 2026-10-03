@@ -21,7 +21,11 @@ import {
 } from "@/lib/transportationData";
 import { minHoursFor } from "@/lib/booking/pricing/hourlyCharter";
 import { AIRPORTS } from "@/lib/transportationLocations";
-import { trackCustomQuoteRequest } from "@/lib/analytics/conversions";
+import {
+  trackBookingStep,
+  trackCheckoutRedirect,
+  trackCustomQuoteRequest,
+} from "@/lib/analytics/conversions";
 import { SITE_CONTACT } from "@/lib/siteContact";
 import { FORM_SUBJECT_PREFIX } from "@/lib/siteEnv";
 import {
@@ -1048,6 +1052,12 @@ export default function TransportationBookingWizard() {
     if (keys) keys.forEach(clearFieldError);
   };
 
+  // Report which step the customer reached, so an abandoned booking tells us
+  // where it was abandoned. Diagnostic only — see `trackBookingStep`.
+  useEffect(() => {
+    trackBookingStep(step, STEP_LABELS_SHORT[step - 1] ?? `Step ${step}`);
+  }, [step]);
+
   const goToStep = (target: number) => {
     setError("");
     if (target < 1 || target > TOTAL_STEPS) return;
@@ -1365,6 +1375,9 @@ export default function TransportationBookingWizard() {
       }
 
       const { checkoutUrl } = (await res.json()) as { checkoutUrl: string };
+      // Mark the hand-off to Stripe. The difference between this and the
+      // purchase event on /booking/success is payment abandonment.
+      trackCheckoutRedirect(priceSummary.total);
       // Redirect to Stripe-hosted checkout. No success state in the wizard —
       // Stripe handles UI from here, and customers come back via /booking/success.
       window.location.href = checkoutUrl;

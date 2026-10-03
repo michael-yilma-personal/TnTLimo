@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { PEEK_BOOKING_URL } from "@/lib/siteBooking";
 import { SITE_CONTACT } from "@/lib/siteContact";
 
@@ -92,6 +93,22 @@ export default function Header({ solid = false }: HeaderProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
+
+  /**
+   * The header's primary button follows the product the visitor is actually
+   * looking at. Tours check out on Peek; transportation checks out on the
+   * on-site wizard. Sending tour traffic to the transportation form drops a
+   * tour shopper into a form that cannot sell them a tour, so anything outside
+   * /transportation goes to Peek — matching the hero, the in-page CTAs and the
+   * mobile sticky bar, which already link there.
+   */
+  const pathname = usePathname();
+  const headerCta = useMemo(() => {
+    const isTransportation = (pathname ?? "/").startsWith("/transportation");
+    return isTransportation
+      ? { href: "/transportation/book", label: "Book Now", external: false }
+      : { href: PEEK_BOOKING_URL, label: "Book a Tour", external: true };
+  }, [pathname]);
   const dropdownTimer = useRef<number | null>(null);
 
   // When `solid` is true the header always behaves as if scrolled.
@@ -327,10 +344,12 @@ export default function Header({ solid = false }: HeaderProps) {
                 whileTap={{ scale: 0.96 }}
               >
                 <Link
-                  href="/transportation/book"
+                  href={headerCta.href}
+                  target={headerCta.external ? "_blank" : undefined}
+                  rel={headerCta.external ? "noopener noreferrer" : undefined}
                   className="ml-2 inline-flex items-center justify-center px-5 py-2.5 bg-gold text-ink text-sm font-semibold tracking-wide rounded-full transition-colors duration-200 hover:bg-gold-dark cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-transparent"
                 >
-                  Book Now
+                  {headerCta.label}
                 </Link>
               </motion.div>
             </nav>
