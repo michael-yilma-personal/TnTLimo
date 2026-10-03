@@ -1,0 +1,454 @@
+/* Home hero — warm-black dusk, route map, black Sprinter.
+   Uses the brand tokens from globals.css (@theme): ink, gold, sunset, cream,
+   and the Cormorant / Montserrat font variables.
+
+   Mobile-first: the base rules are the phone layout — copy, then the service
+   links, then the map, then the van on the road closing the section. The
+   min-width blocks at the bottom widen it for tablet (640px) and desktop
+   (1024px), matching Tailwind's sm / lg breakpoints used elsewhere. */
+
+.hero {
+  /* Warm blacks, same family as bg-ink / bg-charcoal / .hero-gradient */
+  --hero-sky-1: var(--color-ink, #0c0b0a);
+  --hero-sky-2: var(--color-charcoal, #1c1917);
+  --hero-dusk: #2b2118;
+  --hero-text: var(--color-cream, #faf8f4);
+  --hero-muted: rgba(250, 248, 244, 0.68);
+  --hero-line: rgba(250, 248, 244, 0.12);
+  --hero-gold: var(--color-gold, #c9a96e);
+  --hero-gold-light: var(--color-gold-light, #e8d5b0);
+  --hero-sunset: var(--color-sunset, #e07a4a);
+  /* Same gutters and content width as the header and every other section
+     (max-w-7xl + px-5 / sm:px-8 / lg:px-12), so left edges line up. */
+  --hero-gutter: 20px;
+  --hero-max: calc(80rem - 2 * var(--hero-gutter));
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--hero-text);
+  background: var(--hero-sky-1);
+  /* Header is fixed, so clear it */
+  padding-top: clamp(88px, 8vw, 116px);
+  /* The road is the bottom edge on phones and tablets */
+  padding-bottom: 0;
+  padding-inline: var(--hero-gutter);
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 45% at 78% 70%, rgba(201, 169, 110, 0.32), transparent 70%),
+    radial-gradient(45% 35% at 58% 82%, rgba(224, 122, 74, 0.26), transparent 70%),
+    linear-gradient(180deg, var(--hero-sky-1) 0%, var(--hero-sky-2) 45%, var(--hero-dusk) 100%);
+}
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.07;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── Copy column ─────────────────────────────────────────── */
+/* On phones the grid dissolves so copy / services / map / van can be ordered
+   as one column. Focus order still follows the visual order: the map and van
+   hold no links. */
+.grid { display: contents; }
+.copy { min-width: 0; order: 1; }
+
+.eyebrow {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hero-gold);
+}
+.eyebrow i { width: 18px; height: 2px; background: linear-gradient(90deg, var(--hero-gold), var(--hero-gold-light)); }
+
+.h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 20px 0 0;
+  color: var(--hero-text);
+  text-wrap: balance;
+}
+.h1 em {
+  font-style: italic;
+  font-weight: 500;
+  background: linear-gradient(100deg, var(--hero-gold-light) 0%, var(--hero-gold) 45%, var(--hero-sunset) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.06em;
+}
+.lede {
+  max-width: 36em;
+  margin: 24px 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.7;
+  color: var(--hero-muted);
+}
+.lede strong { color: var(--hero-text); font-weight: 600; }
+.lede a {
+  color: var(--hero-text);
+  text-decoration: underline;
+  text-decoration-color: var(--hero-gold);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.3s;
+}
+.lede a:hover { color: var(--hero-gold-light); }
+
+/* Full-width, thumb-sized buttons on phones */
+.ctas { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 26px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.35s var(--ease-out-quint), box-shadow 0.35s, background 0.3s, border-color 0.3s;
+}
+.btn svg { width: 16px; height: 16px; transition: transform 0.35s; }
+.btn:hover svg { transform: translateX(3px); }
+.btn:focus-visible, .svc:focus-visible, .lede a:focus-visible { outline: 2px solid var(--hero-gold); outline-offset: 3px; }
+.primary {
+  /* Flat brand gold, like the header and every other primary button */
+  background: var(--hero-gold);
+  color: var(--color-ink, #0c0b0a);
+  box-shadow: 0 10px 40px -12px rgba(201, 169, 110, 0.55);
+}
+.primary:hover { transform: translateY(-2px); background: var(--color-gold-dark, #a88850); box-shadow: 0 18px 50px -14px rgba(201, 169, 110, 0.7); }
+.ghost {
+  border: 1px solid rgba(250, 248, 244, 0.35);
+  color: var(--hero-text);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(6px);
+}
+.ghost:hover { border-color: var(--hero-text); background: rgba(255, 255, 255, 0.09); }
+
+.proof {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
+  margin: 28px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--hero-line);
+}
+.proof div { display: flex; flex-direction: column-reverse; gap: 2px; }
+.proof dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.proof dt {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hero-muted);
+}
+.star { color: var(--hero-gold); font-size: 20px; vertical-align: 6px; margin-left: 3px; }
+
+/* ─── Route map ───────────────────────────────────────────── */
+.mapWrap { position: relative; min-width: 0; order: 3; width: 100%; max-width: 620px; margin: 24px auto 0; }
+.map { display: block; width: 100%; max-width: 100%; height: auto; overflow: visible; }
+.coast { fill: none; stroke: rgba(250, 248, 244, 0.28); stroke-width: 1.2; }
+.ocean { font-family: var(--font-sans); font-size: 13px; letter-spacing: 4px; fill: rgba(250, 248, 244, 0.28); }
+.routeBase { fill: none; stroke: rgba(250, 248, 244, 0.1); stroke-width: 1.2; stroke-dasharray: 2 5; }
+.route { fill: none; stroke: url(#tnt-route); stroke-width: 2; stroke-linecap: round; }
+.node circle { fill: var(--hero-text); }
+/* The map renders at ~60% scale on a phone, so labels are drawn larger there
+   and the secondary airport names are dropped to keep them legible. */
+.node text { font-family: var(--font-sans); font-size: 16px; fill: var(--hero-muted); letter-spacing: 0.08em; }
+.node .code { fill: var(--hero-text); font-weight: 600; }
+.node .sub { display: none; }
+.node .homeLabel { font-family: var(--font-display); font-size: 30px; font-weight: 600; fill: var(--hero-text); letter-spacing: 0; }
+.node .ring {
+  fill: none;
+  stroke: var(--hero-gold);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring 3.2s ease-out infinite;
+}
+.node .ringTwo { animation-delay: 1.6s; }
+.car { fill: var(--hero-gold-light); filter: url(#tnt-glow); }
+
+.ticket {
+  position: relative;
+  width: 100%;
+  margin-top: -8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--hero-line);
+  background: rgba(28, 25, 23, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+.ticketRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hero-muted);
+}
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--hero-gold); }
+.live i { width: 6px; height: 6px; border-radius: 50%; background: var(--hero-gold); animation: blink 1.4s infinite; }
+.tripBody { transition: opacity 0.3s, transform 0.3s; }
+.swap { opacity: 0; transform: translateY(6px); }
+.trip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 8px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+}
+.tripArrow { flex: 1; height: 1px; position: relative; background: linear-gradient(90deg, var(--hero-gold), var(--hero-sunset)); }
+.tripArrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  border-left: 6px solid var(--hero-sunset);
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+}
+.meta { font-family: var(--font-sans); font-size: 13px; color: var(--hero-muted); }
+.meta b { color: var(--hero-text); font-weight: 600; }
+
+/* ─── Sprinter stage ──────────────────────────────────────── */
+/* Stacked: perks on top, then the van sitting on the road. The bottom padding
+   puts the wheels ~80% of the way down the road strip. */
+.stage {
+  position: relative;
+  order: 4;
+  width: 100%;
+  margin: 24px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: calc(min(7.2vw, 51px) - 3.5vw);
+}
+.palms {
+  position: absolute;
+  /* Full-bleed: the stage is centred, so this spans the whole viewport */
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  bottom: min(9vw, 64px);
+  /* Tile is 520x220, so one loop = height * 2.3636 (see @keyframes scroll) */
+  --palm-h: min(40vw, 200px);
+  height: var(--palm-h);
+  opacity: 0.9;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='220' viewBox='0 0 520 220'%3E%3Cg fill='%23120f0c'%3E%3Cpath d='M86 220 Q92 130 104 52 L110 52 Q100 130 96 220Z'/%3E%3Cpath d='M107 52 Q80 34 46 48 Q80 40 107 58Z M107 52 Q90 20 62 18 Q92 30 107 56Z M107 52 Q124 18 154 20 Q124 30 109 56Z M107 52 Q140 36 168 52 Q136 42 109 58Z M107 52 Q100 70 86 92 Q104 70 111 56Z M107 52 Q122 72 132 94 Q114 70 105 56Z'/%3E%3Cpath d='M356 220 Q360 160 368 104 L373 104 Q366 160 364 220Z'/%3E%3Cpath d='M370 104 Q350 92 326 102 Q350 96 370 108Z M370 104 Q358 80 336 80 Q360 88 370 108Z M370 104 Q384 80 406 82 Q384 90 372 108Z M370 104 Q394 94 414 106 Q392 98 372 110Z M370 104 Q364 120 352 136 Q368 120 373 108Z'/%3E%3C/g%3E%3C/svg%3E") repeat-x left bottom / auto 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  animation: scroll 26s linear infinite;
+}
+.road {
+  position: absolute;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  bottom: 0;
+  height: min(9vw, 64px);
+  background:
+    linear-gradient(180deg, rgba(201, 169, 110, 0.35), transparent 2px),
+    linear-gradient(90deg, rgba(250, 248, 244, 0.35) 46px, transparent 46px) 0 47% / 110px 2px repeat-x,
+    linear-gradient(180deg, #0c0b0a, #060505);
+  animation: dash 1.1s linear infinite;
+}
+.rig {
+  position: relative;
+  width: 100%;
+  animation: driveIn 1.8s cubic-bezier(0.16, 0.84, 0.3, 1) 0.2s both;
+}
+.van { display: block; width: 100%; height: auto; overflow: visible; }
+.chassis { animation: bob 1.2s ease-in-out infinite; }
+.spin { transform-origin: 0 0; animation: spin 0.6s linear infinite; }
+.glint { animation: glint 6s ease-in-out 1.6s infinite; transform: skewX(-20deg); }
+.led { filter: drop-shadow(0 0 4px #c9a96e); animation: pulse 4s ease-in-out infinite; }
+.beam { animation: pulse 3s ease-in-out infinite; }
+.livery { font-family: var(--font-display); font-size: 28px; font-weight: 600; fill: rgba(250, 248, 244, 0.4); }
+.liverySmall { font-family: var(--font-sans); font-size: 8.5px; font-weight: 600; letter-spacing: 2.5px; fill: rgba(250, 248, 244, 0.3); }
+
+.perks {
+  position: relative;
+  z-index: 1;
+  order: -1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.perks li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hero-line);
+  background: rgba(12, 11, 10, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--hero-text);
+}
+.perks li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--hero-gold); }
+
+/* ─── Service links ───────────────────────────────────────── */
+.services {
+  order: 2;
+  width: 100%;
+  margin: 28px auto 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--hero-line);
+  border: 1px solid var(--hero-line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.svc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 14px 18px;
+  background: rgba(12, 11, 10, 0.85);
+  color: var(--hero-text);
+  transition: background 0.35s;
+}
+.svc:hover { background: rgba(201, 169, 110, 0.08); }
+.svc > span { min-width: 0; }
+.svcTitle { display: block; font-family: var(--font-sans); font-size: 15px; font-weight: 600; line-height: 1.3; }
+.svcSub { display: none; margin-top: 3px; font-family: var(--font-sans); font-size: 12.5px; color: var(--hero-muted); }
+.svc svg { width: 18px; height: 18px; flex: none; color: var(--hero-gold); transition: transform 0.35s; }
+.svc:hover svg { transform: translate(3px, -3px); }
+
+/* ─── Load sequence ───────────────────────────────────────── */
+.rise { animation: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.d1 { animation-delay: 0.05s; }
+.d2 { animation-delay: 0.15s; }
+.d3 { animation-delay: 0.28s; }
+.d4 { animation-delay: 0.4s; }
+.d5 { animation-delay: 0.52s; }
+.d6 { animation-delay: 0.64s; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes ring { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(3.2); opacity: 0; } }
+@keyframes blink { 50% { opacity: 0.25; } }
+@keyframes scroll { to { background-position: calc(var(--palm-h) * -2.3636) bottom; } }
+@keyframes dash { to { background-position: 0 0, -110px 47%, 0 0; } }
+@keyframes driveIn { from { transform: translateX(-55vw); } to { transform: none; } }
+@keyframes bob { 50% { transform: translateY(1.2px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glint {
+  0% { transform: skewX(-20deg) translateX(0); }
+  35%, 100% { transform: skewX(-20deg) translateX(1000px); }
+}
+@keyframes pulse { 50% { opacity: 0.6; } }
+
+/* ─── Tablet ──────────────────────────────────────────────── */
+@media (min-width: 640px) {
+  .hero { --hero-gutter: 32px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; gap: 10px; }
+  .eyebrow i { width: 28px; }
+  .ctas { flex-direction: row; flex-wrap: wrap; margin-top: 32px; }
+  .proof { display: flex; flex-wrap: wrap; gap: clamp(18px, 3vw, 40px); margin-top: 32px; }
+  .ocean { font-size: 10px; }
+  .node text { font-size: 11px; }
+  .node .sub { display: inline; }
+  .node .homeLabel { font-size: 24px; }
+  .ticket {
+    position: absolute;
+    left: clamp(0px, 2vw, 24px);
+    bottom: clamp(-8px, 1vw, 12px);
+    width: min(300px, 78%);
+    margin-top: 0;
+  }
+  .perks li { font-size: 13px; }
+  .services { grid-template-columns: 1fr 1fr; }
+  .svc { padding: 20px 22px; }
+  .svcSub { display: block; }
+}
+
+/* ─── Desktop ─────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .hero { --hero-gutter: 48px; display: block; padding-bottom: clamp(32px, 4vw, 48px); }
+  .grid {
+    max-width: var(--hero-max);
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(24px, 4vw, 64px);
+    align-items: center;
+  }
+  .mapWrap { max-width: none; margin: 0; }
+  .stage {
+    display: block;
+    max-width: var(--hero-max);
+    margin-top: clamp(16px, 2vw, 24px);
+    height: clamp(230px, 21vw, 280px);
+    padding-bottom: 0;
+  }
+  .palms { bottom: 64px; --palm-h: calc(0.62 * clamp(230px, 21vw, 280px)); }
+  .road { height: 64px; }
+  .rig { position: absolute; left: clamp(0px, 4vw, 60px); bottom: 22px; width: min(860px, 96%); }
+  .perks {
+    position: absolute;
+    right: 0;
+    top: 4%;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+  }
+  .services {
+    max-width: var(--hero-max);
+    margin-top: clamp(20px, 2.4vw, 28px);
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .node .ring, .live i, .palms, .road, .rig, .chassis, .spin, .glint, .led, .beam { animation: none; }
+  .car { display: none; }
+}
